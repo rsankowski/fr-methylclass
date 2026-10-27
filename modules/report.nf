@@ -16,17 +16,17 @@ process REPORT {
     tuple val(meta), path(crossnn_top), path(methylyzr_csv), path(sturgeon_csv),
           path(lamprey_files), path(cnv_png), path(cnv_manhattan),
           val(raw_reads), val(aligned_reads)
-    path lamprey_classes
     val with_lamprey
 
     output:
     tuple val(meta), path("${meta.id}_report.pdf"), emit: pdf
 
     script:
-    def lamprey_csv = (lamprey_files instanceof List ? lamprey_files : [lamprey_files])
-        .find { it && it.name.endsWith('.csv') }
+    def lfiles = lamprey_files instanceof List ? lamprey_files : [lamprey_files]
+    def lamprey_csv = lfiles.find { it && it.name.endsWith('.csv') }
+    def lamprey_classes = lfiles.find { it && it.name.endsWith('.yaml') && it.size() > 0 }
     def lamprey = with_lamprey
-        ? "--lamprey ${lamprey_csv ?: 'missing_lamprey.csv'} --lamprey-classes ${lamprey_classes}" : ''
+        ? "--lamprey ${lamprey_csv ?: 'missing_lamprey.csv'} ${optArg('--lamprey-classes', lamprey_classes)}" : ''
     def pid = params.patient_id ? "--patient-id '${params.patient_id}'" : ''
     """
     make_report.py --sample ${meta.id} --out ${meta.id}_report.pdf \\

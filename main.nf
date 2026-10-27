@@ -185,7 +185,7 @@ workflow {
         }
         LAMPREY_PREPROCESS(onGenome(ch_aln, toolGenome.lamprey))
         LAMPREY_PREDICT(LAMPREY_PREPROCESS.out.probes, model_dir, model_ref)
-        ch_lamprey = LAMPREY_PREDICT.out.result.map { meta, csv, txt -> [meta.id, [csv, txt]] }
+        ch_lamprey = LAMPREY_PREDICT.out.result.map { meta, csv, txt, classes -> [meta.id, [csv, txt, classes]] }
     }
 
     // ---- standalone copy-number ---------------------------------------------
@@ -230,6 +230,6 @@ workflow {
                 [meta, crossnn ?: [], mlyzr ?: [], sturgeon ?: [], lamprey ?: [], cnv ?: [],
                  manhattan ?: [], counts ? counts[0] : '', counts ? counts[1] : '']
             }
-        REPORT(ch_rep, file(params.lamprey_classes, checkIfExists: true), tools.contains('lamprey'))
+        REPORT(ch_rep, tools.contains('lamprey'))
     }
 }

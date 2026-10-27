@@ -25,11 +25,15 @@ BAMs ─► discover + group ─► ALIGN (merge fragments → dorado aligner �
 ## Quick start
 
 ```bash
-# 1. Fetch the models (crossNN, MethyLYZR, Sturgeon, Lamprey), about 10 GB
 git clone https://github.com/rsankowski/fr-methylclass.git
+
+# 1. Build the classifier images locally (their licences forbid redistribution, see below)
+fr-methylclass/containers/build.sh crossnn methylyzr sturgeon lamprey
+
+# 2. Fetch the models (crossNN, MethyLYZR, Sturgeon, Lamprey), about 10 GB
 fr-methylclass/scripts/download_assets.sh /data/methylclass-assets
 
-# 2. Run (Nextflow pulls the pipeline from GitHub, Docker pulls the images from ghcr.io)
+# 3. Run (Nextflow pulls the pipeline from GitHub; hts/align/report images come from ghcr.io)
 nextflow run rsankowski/fr-methylclass -r v1.0.0 -profile docker \
     --input /data/run42/bam_pass \
     --hg19_fasta /ref/hg19.fa --hg38_fasta /ref/hg38.fa \
@@ -124,7 +128,7 @@ failed tool. Use `--continue_on_error false` to stop on the first error.
 | Profile | Use |
 |---|---|
 | `docker` / `podman` | images from `--container_registry` (default `ghcr.io/rsankowski`) |
-| `singularity` / `apptainer` | the same images via `docker://` |
+| `singularity` / `apptainer` | the same images via `docker://`. Build the classifier images into a private registry you control and set `--restricted_registry` to it. |
 | `gpu` | passes the GPU into the dorado container (`--gpus all` / `--nv`) |
 | `slurm` | SLURM executor. Combine it with a container profile. |
 | `host` | native tools at the paths in `conf/host.config` (this workstation). Copy and edit it for another machine. |
@@ -140,7 +144,7 @@ Resources are set per process label in `conf/base.config` and capped by
 | `align` | dorado 1.2.0, samtools 1.21 |
 | `hts` | samtools 1.21, bedtools 2.31.1, modkit 0.5.0 |
 | `crossnn` | crossNN @26e4db9 (code only), torch 2.10 CPU, scikit-learn 1.6.1 |
-| `methylyzr` | MethyLYZR @f78855e and the batched-flush `bam2feather` patch (bounded memory, identical output) |
+| `methylyzr` | MethyLYZR @f78855e, unmodified |
 | `sturgeon` | Sturgeon @d86d20f |
 | `lamprey` | Lamprey @e885837, modkit 0.5.0 |
 | `report` | matplotlib, pandas, pyyaml (PDF report + CNV segment plot) |
@@ -149,11 +153,12 @@ Resources are set per process label in `conf/base.config` and capped by
 Package versions match the environments the GUI runs in. The models are inputs,
 not baked into the images.
 
-To build the images yourself instead of pulling them, run `containers/build.sh`
-(builds `ghcr.io/rsankowski/<name>:1.0.0` locally), or
-`REGISTRY=methylclass containers/build.sh` together with
-`--container_registry methylclass`. To push to your own registry, use
-`REGISTRY=ghcr.io/<you> PUSH=1 containers/build.sh`.
+`hts`, `align` and `report` are public at `ghcr.io/rsankowski` (`--container_registry`).
+The four classifier images (`crossnn`, `methylyzr`, `sturgeon`, `lamprey`) are
+**not** published: `containers/build.sh` builds them locally as
+`methylclass/<name>:1.0.0` (`--restricted_registry`) and never pushes them. The
+Dockerfiles fetch each tool from its original repository, so each user obtains it
+directly and accepts its licence.
 
 ## Files
 
@@ -180,5 +185,18 @@ fr-methylclass only orchestrates other people's tools. Please cite the original 
 - **Rapid-CNS2**: https://github.com/areebapatel/Rapid-CNS2_nf
 - **cnvpytor**, **modkit**, **dorado**, **samtools**, **bedtools**, EPI2ME **wf-metagenomics**
 
-Each tool and model has its own licence. The models are not distributed with this
-repository; `scripts/download_assets.sh` fetches them from their original sources.
+## Licences
+
+The pipeline code in this repository is under the Apache 2.0 licence (`LICENSE`).
+It does **not** include any code or models of the classifiers, which come with their
+own, much more restrictive terms. By building the images and downloading the models
+you obtain them from their authors and must accept their licences yourself:
+
+| Tool | Terms (summary, read the original) |
+|---|---|
+| crossNN | no licence published, so all rights reserved by the authors |
+| MethyLYZR | MPG research licence: academic / not-for-profit research only; no commercial or clinical use, no alterations, no redistribution |
+| Sturgeon | Oncode / Cyclomics evaluation licence: internal non-commercial research only; no clinical or diagnostic use, no redistribution, no derivative works; publishing results needs permission from Oncode and Cyclomics |
+| Lamprey | Oncode / Cyclomics evaluation licence: internal non-commercial research only; no clinical use, no redistribution, no derivative works; inform Oncode and Cyclomics in writing before submitting results for publication |
+
+None of these tools may be used for diagnosis or patient care under these terms.

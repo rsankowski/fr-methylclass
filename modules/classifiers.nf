@@ -233,7 +233,8 @@ process LAMPREY_PREDICT {
     val model_ref
 
     output:
-    tuple val(meta), path("${meta.id}_lamprey.csv"), path("${meta.id}_lamprey_report.txt"), emit: result
+    tuple val(meta), path("${meta.id}_lamprey.csv"), path("${meta.id}_lamprey_report.txt"),
+          path("lamprey_classes.yaml"), emit: result
     path "${meta.id}_lamprey*", emit: all
 
     script:
@@ -248,10 +249,14 @@ process LAMPREY_PREDICT {
     ${offline}
     lamprey -i ${probes} -m ${model} -o ${meta.id}_lamprey.csv \\
         -d nanopore --plot --top-n ${params.lamprey_top_n}
+    # class display names for the report, from the installed Lamprey package
+    "\$(head -1 "\$(command -v lamprey)" | sed 's/^#!//')" -c \
+        "import importlib.resources as r, shutil; shutil.copy(r.files('lamprey') / 'files/classification_system.yaml', 'lamprey_classes.yaml')" \
+        || touch lamprey_classes.yaml
     """
 
     stub:
     """
-    touch ${meta.id}_lamprey.csv ${meta.id}_lamprey_report.txt
+    touch ${meta.id}_lamprey.csv ${meta.id}_lamprey_report.txt lamprey_classes.yaml
     """
 }
