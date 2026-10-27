@@ -1,0 +1,655 @@
+classification_system: leukemia
+
+colors:
+  family:
+    BCP-ALL: '#f7a1d5'
+    T-ALL: '#E41A1C'
+    AML: '#78D778'
+    MDS: '#FFF999'
+    MDS_MPN: '#660000'
+    MPN: '#2ca02c'
+    BPDCN: '#9467bd'
+    JMML: '#00BFFF'
+    HISTIOCYTIC: '#8c564b'
+    PLASMA_CELL: '#a52b3a'
+    MATURE_B_SMALL_CELL: '#7b6d8d'
+    MATURE_B_NON_SMALL_CELL: '#2d4ea2'
+    MATURE_T_NK: '#006699'
+    HODGKINS_LYMPHOMA: '#7dbdf2'
+    DENDRITIC_STROMAL: '#795548'
+    CONTROL: '#909090'
+
+  type:
+    # BCP-ALL
+    ANEUPLOIDY:    '#420509'
+    BCRABL1:       '#46114F'
+    BCRABL1_LIKE:  '#9B0D2C'
+    ZNF384:        '#b60f26'
+    MEF2D:         '#711976'
+    iAMP21:        '#9E229C'
+    TCF3PBX1:      '#D848BF'
+    PAX5ALT:       '#ED1B69'
+    PAX5P80R:      '#ff69ff'
+    NUTM1:         '#C62AB7'
+    KMT2ABALL:     '#E16FC5'
+    IGHMYC:        '#C71046'
+    TCF3HLF:       '#F474B7'
+    ETV6RUNX1:     '#E997CE'
+    DUX4:          '#F7A1D5'
+
+    # T-ALL
+    BCL11B:        '#3D1A78'
+    ETP:           '#4A148C'
+    NOTCH1_TLBL:   '#6A1B9A'
+    TALR:          '#9C6ADE'
+    TALLOTHER:     '#E6D7FF'
+
+    # AML
+    RUNX1RUNX1T1:   '#6D001A'
+    CBFBMYH11:      '#B71C1C'
+    PMLRARA:        '#D32F2F'
+    ETV6MNX1:       '#FF4D6D'
+    UBTF_ITD:       '#B80F3A'
+    KMT2AAML_MECOM: '#FF2E63'
+    KMT2AAML_HMX3:  '#FF4757'
+    KMT2AAML_FOXC1: '#FF6B81'
+    KMT2AAML_HOXAB: '#FF6B4A'
+    FETETS:         '#A7001E'
+    CEBPA:          '#F28B82'
+    NUP98NSD1:      '#FF8A65'
+    CBFA2T3GLIS2:   '#E65100'
+    DEKNUP214:      '#FF9100'
+    AMKL_MIXED:     '#FFC4B8'
+    DS_GATA1:       '#FFD8D1'
+    NPM1:           '#FFD400'
+    NPM1_IDH:       '#FFB300'
+    NPM1_TET2:      '#FFC107'
+    NPM1_DNMT3A:    '#FFCA28'
+    IDH:            '#FF7A00'
+
+    # MDS & MDS_MPN
+    lMDS:           '#B8C400'
+    hMDS:           '#9EAD00'
+    CMML:           '#586d5c'
+
+    # MPN & JMML
+    nphMPN:         '#607D8B'
+    CML:            '#455A64'
+    prePMF:           '#60688b'
+    ET:             '#607e8b'
+
+    JMMLl:          '#6A1E55'
+    JMMLm:          '#8E2C6C'
+    JMMLh:          '#B565A7'
+
+    # MATURE B
+    # Small Cell
+    MZBL:       '#004D40'
+    LPL:        '#00695C'
+    MCL_SOX11P: '#00796B'
+    MCL_SOX11N: '#009688'
+    BPLL:       '#26A69A'
+    HCLv:       '#4DB6AC'
+    HCL:        '#80CBC4'
+    M-CLL:      '#B2DFDB'
+    U-CLL:      '#E0F2F1'
+
+    # Non-Small Cell
+    ALKLBCL:      '#041258'
+    DLBCL_MLBCL:  '#0D52A5'
+    FL:           '#1892BF'
+    PTFL:         '#3A71DF'
+    nebvBL:       '#8DBDE2'
+    ebvBL:        '#7575D7'
+
+    # MATURE T_NK
+    HTLV1_ATL:     '#1B5E20'
+    ENKTL:         '#388E3C'
+    HSTCL:         '#81C784'
+    ALCL:          '#C5E1A5'
+    FTHCL:         '#2E7D32'
+    TLGLL:         '#66BB6A'
+    TPLL:          '#00363A'
+    ETCL_NONSETD2: '#4CAF50'
+    ETCL_SETD2:    '#8BC34A'
+    SZ:            '#26A69A'
+
+    # HISTIOCYTIC
+    LCH_ECD:       '#A1887F'
+    HS:            '#6D4C41'
+
+    # DENDRITIC_STROMAL
+    FDCS:          '#8D6E63'
+
+    # OTHERS
+    BPDCN:       '#9575CD'
+    PLASMA_CELL: '#5D4037'
+    HL:          '#D1C4E9'
+
+    # CONTROLS
+    CLYMPH:  '#424242'
+    CSKIN:   '#757575'
+    CBLOOD:  '#BDBDBD'
+    CMARROW: '#E0E0E0'
+
+
+decoder:
+  family:
+    0: BCP-ALL
+    1: T-ALL
+    2: AML
+    3: MDS
+    4: MDS_MPN
+    5: MPN
+    6: BPDCN
+    7: JMML
+    8: HISTIOCYTIC
+    9: PLASMA_CELL
+    10: MATURE_B_SMALL_CELL
+    11: MATURE_B_NON_SMALL_CELL
+    12: MATURE_T_NK
+    13: HODGKINS_LYMPHOMA
+    14: DENDRITIC_STROMAL
+    15: CONTROL
+
+  type:
+    # BCP-ALL (0-14)
+    0: ANEUPLOIDY
+    1: BCRABL1
+    2: BCRABL1_LIKE
+    3: DUX4
+    4: ETV6RUNX1
+    5: iAMP21
+    6: IGHMYC
+    7: KMT2ABALL
+    8: MEF2D
+    9: NUTM1
+    10: PAX5ALT
+    11: PAX5P80R
+    12: TCF3HLF
+    13: TCF3PBX1
+    14: ZNF384
+    # T-ALL (15-19)
+    15: BCL11B
+    16: ETP
+    17: NOTCH1_TLBL
+    18: TALLOTHER
+    19: TALR
+    # AML (20-40)
+    20: AMKL_MIXED
+    21: CBFA2T3GLIS2
+    22: CBFBMYH11
+    23: CEBPA
+    24: PMLRARA
+    25: DS_GATA1
+    26: ETV6MNX1
+    27: FETETS
+    28: RUNX1RUNX1T1
+    29: KMT2AAML_FOXC1
+    30: KMT2AAML_HMX3
+    31: KMT2AAML_HOXAB
+    32: KMT2AAML_MECOM
+    33: NPM1
+    34: NPM1_DNMT3A
+    35: NPM1_IDH
+    36: NPM1_TET2
+    37: NUP98NSD1
+    38: DEKNUP214
+    39: UBTF_ITD
+    40: IDH
+    # MDS (41-42)
+    41: lMDS
+    42: hMDS
+    # MDS_MPN (43)
+    43: CMML
+    # MPN (44-47)
+    44: CML
+    45: ET
+    46: prePMF
+    47: nphMPN
+    # BPDCN (48)
+    48: BPDCN
+    # JMML (49-51)
+    49: JMMLh
+    50: JMMLl
+    51: JMMLm
+    # HISTIOCYTIC (52-53)
+    52: HS
+    53: LCH_ECD
+    # PLASMA_CELL (54)
+    54: PLASMA_CELL
+    # MATURE_B_SMALL_CELL (55-63)
+    55: BPLL
+    56: HCL
+    57: HCLv
+    58: LPL
+    59: M-CLL
+    60: U-CLL
+    61: MCL_SOX11P
+    62: MCL_SOX11N
+    63: MZBL
+    # MATURE_B_NON_SMALL_CELL (64-69)
+    64: ALKLBCL
+    65: DLBCL_MLBCL
+    66: FL
+    67: PTFL
+    68: nebvBL
+    69: ebvBL
+    # MATURE_T_NK (70-79)
+    70: ALCL
+    71: ENKTL
+    72: ETCL_NONSETD2
+    73: ETCL_SETD2
+    74: FTHCL
+    75: HSTCL
+    76: HTLV1_ATL
+    77: SZ
+    78: TLGLL
+    79: TPLL
+    # HODGKINS_LYMPHOMA (80)
+    80: HL
+    # DENDRITIC_STROMAL (81)
+    81: FDCS
+    # CONTROL (82-85)
+    82: CBLOOD
+    83: CLYMPH
+    84: CMARROW
+    85: CSKIN
+
+
+encoder:
+  family:
+    BCP-ALL: 0
+    T-ALL: 1
+    AML: 2
+    MDS: 3
+    MDS_MPN: 4
+    MPN: 5
+    BPDCN: 6
+    JMML: 7
+    HISTIOCYTIC: 8
+    PLASMA_CELL: 9
+    MATURE_B_SMALL_CELL: 10
+    MATURE_B_NON_SMALL_CELL: 11
+    MATURE_T_NK: 12
+    HODGKINS_LYMPHOMA: 13
+    DENDRITIC_STROMAL: 14
+    CONTROL: 15
+
+  type:
+    # BCP-ALL (0-14)
+    ANEUPLOIDY: 0
+    BCRABL1: 1
+    BCRABL1_LIKE: 2
+    DUX4: 3
+    ETV6RUNX1: 4
+    iAMP21: 5
+    IGHMYC: 6
+    KMT2ABALL: 7
+    MEF2D: 8
+    NUTM1: 9
+    PAX5ALT: 10
+    PAX5P80R: 11
+    TCF3HLF: 12
+    TCF3PBX1: 13
+    ZNF384: 14
+    # T-ALL (15-19)
+    BCL11B: 15
+    ETP: 16
+    NOTCH1_TLBL: 17
+    TALLOTHER: 18
+    TALR: 19
+    # AML (20-40)
+    AMKL_MIXED: 20
+    CBFA2T3GLIS2: 21
+    CBFBMYH11: 22
+    CEBPA: 23
+    PMLRARA: 24
+    DS_GATA1: 25
+    ETV6MNX1: 26
+    FETETS: 27
+    RUNX1RUNX1T1: 28
+    KMT2AAML_FOXC1: 29
+    KMT2AAML_HMX3: 30
+    KMT2AAML_HOXAB: 31
+    KMT2AAML_MECOM: 32
+    NPM1: 33
+    NPM1_DNMT3A: 34
+    NPM1_IDH: 35
+    NPM1_TET2: 36
+    NUP98NSD1: 37
+    DEKNUP214: 38
+    UBTF_ITD: 39
+    IDH: 40
+    # MDS (41-42)
+    lMDS: 41
+    hMDS: 42
+    # MDS_MPN (43)
+    CMML: 43
+    # MPN (44-47)
+    CML: 44
+    ET: 45
+    prePMF: 46
+    nphMPN: 47
+    # BPDCN (48)
+    BPDCN: 48
+    # JMML (49-51)
+    JMMLh: 49
+    JMMLl: 50
+    JMMLm: 51
+    # HISTIOCYTIC (52-53)
+    HS: 52
+    LCH_ECD: 53
+    # PLASMA_CELL (54)
+    PLASMA_CELL: 54
+    # MATURE_B_SMALL_CELL (55-63)
+    BPLL: 55
+    HCL: 56
+    HCLv: 57
+    LPL: 58
+    M-CLL: 59
+    U-CLL: 60
+    MCL_SOX11P: 61
+    MCL_SOX11N: 62
+    MZBL: 63
+    # MATURE_B_NON_SMALL_CELL (64-69)
+    ALKLBCL: 64
+    DLBCL_MLBCL: 65
+    FL: 66
+    PTFL: 67
+    nebvBL: 68
+    ebvBL: 69
+    # MATURE_T_NK (70-79)
+    ALCL: 70
+    ENKTL: 71
+    ETCL_NONSETD2: 72
+    ETCL_SETD2: 73
+    FTHCL: 74
+    HSTCL: 75
+    HTLV1_ATL: 76
+    SZ: 77
+    TLGLL: 78
+    TPLL: 79
+    # HODGKINS_LYMPHOMA (80)
+    HL: 80
+    # DENDRITIC_STROMAL (81)
+    FDCS: 81
+    # CONTROL (82-85)
+    CBLOOD: 82
+    CLYMPH: 83
+    CMARROW: 84
+    CSKIN: 85
+
+
+hierarchy:
+  - 0: family
+  - 1: type
+
+
+names:
+  family:
+    BCP-ALL: "B-ALL"
+    T-ALL: "T-ALL"
+    AML: "AML"
+    MDS: "MDS"
+    MDS_MPN: "MDS/MPN"
+    MPN: "MPN"
+    BPDCN: "BPDCN"
+    JMML: "JMML"
+    HISTIOCYTIC: "Histiocytic disorders"
+    PLASMA_CELL: "Plasma cell neoplasms"
+    MATURE_B_SMALL_CELL: "Mature B small-cell / leukemic"
+    MATURE_B_NON_SMALL_CELL: "Mature B non-small-cell"
+    MATURE_T_NK: "Mature T/NK neoplasms"
+    HODGKINS_LYMPHOMA: "Hodgkin lymphoma"
+    DENDRITIC_STROMAL: "Dendritic/stromal cell neoplasms"
+    CONTROL: "Control"
+
+  type:
+    # BCP-ALL
+    ANEUPLOIDY: "Aneuploidy"
+    ETV6RUNX1: "ETV6-RUNX1"
+    KMT2ABALL: "KMT2A-rearranged B-ALL"
+    TCF3PBX1: "TCF3-PBX1"
+    PAX5ALT: "PAX5-altered"
+    PAX5P80R: "PAX5 P80R"
+    NUTM1: "NUTM1-rearranged"
+    BCRABL1: "BCR-ABL1 B-ALL"
+    BCRABL1_LIKE: "BCR-ABL1-like B-ALL"
+    iAMP21: "iAMP21"
+    ZNF384: "ZNF384-rearranged"
+    MEF2D: "MEF2D-rearranged"
+    DUX4: "DUX4-rearranged"
+    IGHMYC: "IGH-MYC B-ALL"
+    TCF3HLF: "TCF3-HLF"
+
+    # T-ALL
+    BCL11B: "BCL11B-activated"
+    ETP: "ETP-enriched"
+    TALLOTHER: "Other T-ALL/LBL"
+    TALR: "TAL1-like"
+    NOTCH1_TLBL: "NOTCH1-rearranged T-LBL"
+
+    # AML / myeloid
+    CEBPA: "CEBPA"
+    CBFBMYH11: "CBFB-MYH11"
+    PMLRARA: "PML-RARA"
+    RUNX1RUNX1T1: "RUNX1-RUNX1T1"
+    CBFA2T3GLIS2: "CBFA2T3-GLIS2"
+    DEKNUP214: "DEK-NUP214"
+    ETV6MNX1: "ETV6MNX1-rearranged"
+    KMT2AAML_MECOM: "KMT2A-AML (MECOM)"
+    KMT2AAML_HMX3: "KMT2A-AML (HMX3)"
+    KMT2AAML_FOXC1: "KMT2A-AML (FOXC1)"
+    KMT2AAML_HOXAB: "KMT2A-AML (HOXA/B)"
+    UBTF_ITD: "UBTF-ITD"
+    NUP98NSD1: "NUP98-NSD1"
+    FETETS: "FET-ETS family fusion"
+    NPM1_IDH: "NPM1 + IDH"
+    NPM1: "NPM1"
+    NPM1_TET2: "NPM1 + TET2"
+    NPM1_DNMT3A: "NPM1 + DNMT3A"
+    IDH: "IDH1/2"
+    AMKL_MIXED: "AMKL (mixed)"
+    DS_GATA1: "Down syndrome / GATA1 AML"
+
+    # MDS
+    lMDS: "Low-risk MDS"
+    hMDS: "High-risk MDS / Secondary AML"
+
+    # MDS/MPN
+    CMML: "CMML"
+
+    # MPN
+    nphMPN: "Non-Ph MPN"
+    CML: "CML"
+    prePMF: "Prefibrotic primary myelofibrosis"
+    ET: "Essential thrombocythemia"
+
+    # BPDCN
+    BPDCN: "BPDCN"
+
+    # JMML
+    JMMLl: "JMML (low methylation)"
+    JMMLm: "JMML (medium methylation)"
+    JMMLh: "JMML (high methylation)"
+
+    # Histiocytic
+    LCH_ECD: "Langerhans cell histiocytosis / Erdheim-Chester disease"
+    HS: "Histiocytic sarcoma"
+
+    # Dendritic/stromal
+    FDCS: "Follicular dendritic cell sarcoma"
+
+    # Plasma cell
+    PLASMA_CELL: "Plasma cell neoplasm"
+
+    # Mature B small-cell
+    M-CLL: "CLL (IGHV mutated)"
+    U-CLL: "CLL (IGHV unmutated)"
+    BPLL: "B-prolymphocytic leukemia"
+    MCL_SOX11P: "Mantle cell lymphoma (SOX11+)"
+    MCL_SOX11N: "Mantle cell lymphoma (SOX11-)"
+    LPL: "Lymphoplasmacytic lymphoma"
+    HCL: "Hairy cell leukemia"
+    HCLv: "Hairy cell leukemia variant"
+    MZBL: "Marginal zone B-cell lymphoma"
+
+    # Mature B non-small-cell
+    nebvBL: "Burkitt lymphoma (EBV-)"
+    ebvBL: "Burkitt lymphoma (EBV+)"
+    DLBCL_MLBCL: "DLBCL / MLBCL"
+    FL: "Follicular lymphoma"
+    PTFL: "Pediatric-type follicular lymphoma"
+    ALKLBCL: "ALK+ large B-cell lymphoma"
+
+    # Mature T/NK
+    ALCL: "ALCL"
+    HSTCL: "Hepatosplenic T-cell lymphoma"
+    ENKTL: "Extranodal NK/T-cell lymphoma"
+    HTLV1_ATL: "HTLV-1 adult T-cell leukemia/lymphoma"
+    FTHCL: "Follicular T-helper cell lymphoma"
+    TLGLL: "T-cell large granular lymphocytic leukemia"
+    TPLL: "T-prolymphocytic leukemia"
+    ETCL_NONSETD2: "Extranodal T-cell lymphoma (non-SETD2)"
+    ETCL_SETD2: "Extranodal T-cell lymphoma (SETD2)"
+    SZ: "Sézary syndrome"
+
+    # Hodgkin
+    HL: "Hodgkin lymphoma"
+
+    # Controls
+    CMARROW: "Control marrow"
+    CBLOOD: "Control blood"
+    CSKIN: "Control skin"
+    CLYMPH: "Control lymph node"
+
+
+tree:
+  BCP-ALL:
+    - ANEUPLOIDY
+    - iAMP21
+    - BCRABL1
+    - BCRABL1_LIKE
+    - PAX5ALT
+    - PAX5P80R
+    - DUX4
+    - ETV6RUNX1
+    - IGHMYC
+    - KMT2ABALL
+    - NUTM1
+    - TCF3HLF
+    - TCF3PBX1
+    - MEF2D
+    - ZNF384
+
+  T-ALL:
+    - BCL11B
+    - ETP
+    - NOTCH1_TLBL
+    - TALR
+    - TALLOTHER
+
+  AML:
+    - AMKL_MIXED
+    - CBFA2T3GLIS2
+    - DS_GATA1
+    - CBFBMYH11
+    - CEBPA
+    - ETV6MNX1
+    - FETETS
+    - KMT2AAML_FOXC1
+    - KMT2AAML_HMX3
+    - KMT2AAML_MECOM
+    - KMT2AAML_HOXAB
+    - DEKNUP214
+    - NUP98NSD1
+    - UBTF_ITD
+    - NPM1
+    - NPM1_DNMT3A
+    - NPM1_IDH
+    - NPM1_TET2
+    - PMLRARA
+    - RUNX1RUNX1T1
+    - IDH
+
+  MDS:
+    - lMDS
+    - hMDS
+
+  MDS_MPN:
+    - CMML
+
+  MPN:
+    - CML
+    - ET
+    - prePMF
+    - nphMPN
+
+  BPDCN:
+    - BPDCN
+
+  JMML:
+    - JMMLh
+    - JMMLl
+    - JMMLm
+
+  HISTIOCYTIC:
+    - HS
+    - LCH_ECD
+
+  PLASMA_CELL:
+    - PLASMA_CELL
+
+  MATURE_B_SMALL_CELL:
+    - HCL
+    - HCLv
+    - LPL
+    - BPLL
+    - M-CLL
+    - U-CLL
+    - MCL_SOX11N
+    - MCL_SOX11P
+    - MZBL
+
+  MATURE_B_NON_SMALL_CELL:
+    - ALKLBCL
+    - DLBCL_MLBCL
+    - ebvBL
+    - nebvBL
+    - FL
+    - PTFL
+
+  MATURE_T_NK:
+    - ALCL
+    - ENKTL
+    - ETCL_NONSETD2
+    - ETCL_SETD2
+    - FTHCL
+    - HSTCL
+    - HTLV1_ATL
+    - SZ
+    - TLGLL
+    - TPLL
+
+  HODGKINS_LYMPHOMA:
+    - HL
+
+  DENDRITIC_STROMAL:
+    - FDCS
+
+  CONTROL:
+    - CBLOOD
+    - CLYMPH
+    - CMARROW
+    - CSKIN
+
+
+controls:
+  family:
+    - CONTROL
+  type:
+    - CMARROW
+    - CBLOOD
+    - CLYMPH
+    - CSKIN

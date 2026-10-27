@@ -1,0 +1,13 @@
+# Nextflow run state
+.nextflow*
+work/
+results/
+nested-work/
+# local data never goes into the repo
+*.bam
+*.bai
+*.pod5
+!tests/data/**/*.bam
+__pycache__/
+*.pyc
+.claude/
