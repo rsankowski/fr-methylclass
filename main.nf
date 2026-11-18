@@ -3,7 +3,7 @@
  * Methylation classification of nanopore BAMs — Nextflow port of the
  * Methylation Classification GUI (pipelines.py).
  *
- * crossNN · MethyLYZR · Sturgeon · Lamprey · standalone copy-number (cnvpytor)
+ * crossNN · MethyLYZR · Sturgeon V2 · Lamprey · standalone copy-number (cnvpytor)
  * · rapidCNS2 · EPI2ME wf-metagenomics · one-page PDF report per sample.
  *
  * EXPERIMENTAL — RESEARCH USE ONLY. Not validated for diagnostic use.
@@ -11,9 +11,9 @@
 nextflow.enable.dsl = 2
 
 include { SAMTOOLS_FAIDX; ALIGN; MERGE_RAW; READ_COUNTS } from './modules/prepare'
-include { MODKIT_PILEUP as CROSSNN_PILEUP; MODKIT_PILEUP as STURGEON_PILEUP;
+include { MODKIT_PILEUP as CROSSNN_PILEUP;
           CROSSNN_ANNOTATE; CROSSNN_PREDICT; METHYLYZR_FEATHER; METHYLYZR_CLASSIFY;
-          STURGEON; LAMPREY_PREPROCESS; LAMPREY_PREDICT } from './modules/classifiers'
+          STURGEON_EXTRACT; STURGEON; LAMPREY_PREPROCESS; LAMPREY_PREDICT } from './modules/classifiers'
 include { CNVPYTOR; CNV_SEGMENT_PLOT; CNV_SEGMENT_PLOT as RAPIDCNS2_SEGMENT_PLOT } from './modules/cnv'
 include { RAPIDCNS2; METAGENOMICS } from './modules/nested'
 include { REPORT } from './modules/report'
@@ -159,12 +159,12 @@ workflow {
         ch_methylyzr = keyed(METHYLYZR_CLASSIFY.out.csv)
     }
 
-    // ---- Sturgeon -----------------------------------------------------------
+    // ---- Sturgeon V2 (T2T-CHM13v2.0 only) ------------------------------------
     if ('sturgeon' in tools) {
-        def model = requireFile(asset(params.sturgeon_model, 'sturgeon/general.zip'), 'Sturgeon model')
-        STURGEON_PILEUP(onGenome(ch_aln, toolGenome.sturgeon))
-        STURGEON(STURGEON_PILEUP.out.bedmethyl, model)
-        ch_sturgeon = keyed(STURGEON.out.csv)
+        def model = requireFile(asset(params.sturgeon_model, 'sturgeon/cns-v2.5.zip'), 'Sturgeon V2 model')
+        STURGEON_EXTRACT(onGenome(ch_aln, toolGenome.sturgeon), model)
+        STURGEON(STURGEON_EXTRACT.out.calls, model)
+        ch_sturgeon = keyed(STURGEON.out.scores)
     }
 
     // ---- Lamprey ------------------------------------------------------------

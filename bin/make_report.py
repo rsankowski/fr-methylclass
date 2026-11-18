@@ -4,7 +4,7 @@
 Combines, on a single page:
   * crossNN classification — brain-tumor (Capper) AND pan-cancer models
   * MethyLYZR classification
-  * Sturgeon CNS classification
+  * Sturgeon V2 CNS classification
   * Lamprey haematological-malignancy classification (type + family level)
   * standalone copy-number profile (rapidCNS2 cnvpytor called-segment plot)
 
@@ -15,7 +15,7 @@ Usage:
     make_report.py --sample S --out report.pdf \
         --crossnn <sample>_crossnn_top.tsv \
         --methylyzr MethyLYZR_<sample>.csv \
-        --sturgeon <sample>_sturgeon_general.csv \
+        --sturgeon <sample>_sturgeon_scores.tsv \
         --lamprey <sample>_lamprey.csv \
         --cnv <sample>.cnv_segments.png \
         [--cnv-manhattan <sample>_cnvpytor_100k.png] \
@@ -40,7 +40,7 @@ CROSSNN_MODELS = {
 TOP_N = 5
 CROSSNN_THRESHOLD = 0.2    # crossNN confidence guide/cutoff
 DEFAULT_THRESHOLD = 0.6    # MethyLYZR confidence guide
-STURGEON_THRESHOLD = 0.95  # Sturgeon confidence guide/cutoff
+STURGEON_THRESHOLD = 0.95  # Sturgeon confidence guide (v1 cutoff; v2 publishes none)
 LAMPREY_THRESHOLD = 0.90   # Lamprey "diagnostic" cutoff (its own report uses 0.90)
 
 
@@ -96,17 +96,20 @@ def methylyzr_axis(ax, path):
 
 
 def sturgeon_axis(ax, path):
-    title = "Sturgeon"
+    title = "Sturgeon V2"
     if not path or not os.path.exists(path):
         _bar(ax, title, [], [])
         return
-    # Sturgeon writes one row, wide: 'number_probes' + one column per class
-    # (calibrated scores). Drop the bookkeeping columns and rank the classes.
-    df = pd.read_csv(path)
-    row = df.iloc[0]
-    drop = [c for c in ("number_probes", "timestamp") if c in df.columns]
-    scores = row.drop(labels=drop).astype(float).sort_values(ascending=False)
-    scores = scores.head(TOP_N)
+    # Sturgeon V2 result.txt: tab-separated, one row per sampling, one column
+    # per class (calibrated scores) + 'probes'. Average the samplings and rank.
+    df = pd.read_csv(path, sep="\t")
+    n = int(df["probes"].iloc[0]) if "probes" in df.columns and len(df) else 0
+    if n == 0:
+        _bar(ax, title, [], [])
+        return
+    title += f" ({n:,} CpGs)"
+    scores = df.drop(columns="probes").astype(float).mean()
+    scores = scores.sort_values(ascending=False).head(TOP_N)
     _bar(ax, title, list(scores.index.astype(str)), list(scores.values),
          threshold=STURGEON_THRESHOLD)
 
@@ -278,12 +281,12 @@ def main():
     notes = ("Score bars show the top 5 classes per model"
              + (" (Lamprey family: top 3)" if with_lamprey else "") + ".  "
              f"Dashed guide: crossNN {CROSSNN_THRESHOLD}, "
-             f"MethyLYZR {DEFAULT_THRESHOLD}, Sturgeon {STURGEON_THRESHOLD}"
+             f"MethyLYZR {DEFAULT_THRESHOLD}, Sturgeon V2 {STURGEON_THRESHOLD}"
              + (f", Lamprey {LAMPREY_THRESHOLD}" if with_lamprey else "")
              + "\n(blue ≥ guide, grey < guide).  "
              "crossNN: NN methylation classifier (brain-tumour + pan-cancer).  "
              "MethyLYZR: EPIC-array emulation classifier.\n"
-             "Sturgeon: CNS tumour classifier.  ")
+             "Sturgeon V2: CNS tumour classifier (T2T-CHM13).  ")
     if with_lamprey:
         notes += ("Lamprey: haematological malignancy classifier (86 types, "
                   "no CNS tumour classes) — only\ninformative if "

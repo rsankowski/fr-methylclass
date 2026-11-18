@@ -1,12 +1,11 @@
 /*
- * Methylation classifiers: crossNN, MethyLYZR, Sturgeon, Lamprey.
+ * Methylation classifiers: crossNN, MethyLYZR, Sturgeon V2, Lamprey.
  * Commands mirror pipelines.py of the GUI (and the production notebooks).
  */
 
 /*
  * CpG pileup, strands combined. Extra flags come from ext.args — crossNN adds
- * --combine-mods (sums 5mC+5hmC so the hemi-methyl signal is kept); Sturgeon
- * keeps the 5mC 'm' code it needs, so it runs without.
+ * --combine-mods (sums 5mC+5hmC so the hemi-methyl signal is kept).
  */
 process MODKIT_PILEUP {
     tag "${meta.id}"
@@ -162,35 +161,78 @@ process METHYLYZR_CLASSIFY {
     """
 }
 
+/*
+ * Sturgeon V2 reads per-read calls (modkit extract), not a pileup. Only reads
+ * on T2T-CHM13v2.0 work: the probe locations in the model zip are CHM13
+ * coordinates. Extraction is limited to the model's probes +/- 25 bp (the
+ * inputtobed margin), which keeps the table small. With sturgeon_combine_hmc,
+ * 5hmC is first folded into 5mC (array-like signal, as the README advises).
+ */
+process STURGEON_EXTRACT {
+    tag "${meta.id}"
+    label 'sturgeon'
+
+    input:
+    tuple val(meta), val(genome), path(bam), path(bai), path(fasta), path(fai)
+    path model
+
+    output:
+    tuple val(meta), path("${meta.id}.txt"), emit: calls
+
+    script:
+    """
+    python3 - ${model} ${model.baseName}/probe.bed > probes.bed <<'PY'
+    import sys, zipfile
+    with zipfile.ZipFile(sys.argv[1]) as z:
+        rows = z.read(sys.argv[2]).decode().splitlines()[1:]
+    for r in rows:
+        c, s, e = r.split('\\t')[:3]
+        print(f"{c}\\t{max(0, int(s) - 25)}\\t{int(e) + 25}")
+    PY
+    src=${bam}
+    if [ "${params.sturgeon_combine_hmc}" = true ]; then
+        modkit adjust-mods --convert h m ${bam} adjusted.bam --threads ${task.cpus}
+        samtools index adjusted.bam
+        src=adjusted.bam
+    fi
+    modkit extract full \$src ${meta.id}.txt --include-bed probes.bed \\
+        --mapped-only --cpg --reference ${fasta} --threads ${task.cpus}
+    rm -f adjusted.bam adjusted.bam.bai probes.bed
+    """
+
+    stub:
+    """
+    touch ${meta.id}.txt
+    """
+}
+
 process STURGEON {
     tag "${meta.id}"
     label 'sturgeon'
 
     input:
-    tuple val(meta), path(bedmethyl)
+    tuple val(meta), path(calls)
     path model
 
     output:
-    tuple val(meta), path("${meta.id}/${meta.id}_sturgeon_general.csv"), emit: csv
+    tuple val(meta), path("${meta.id}/${meta.id}_sturgeon_scores.tsv"), emit: scores
     path "${meta.id}/*", emit: all
 
     script:
-    // inputtobed os.removedirs() its output path and every empty parent, so it
-    // writes into the task root and the bed is moved into the results dir after
+    // the model (~3.7 GB unpacked) is extracted to TMPDIR on every call
     """
-    sturgeon inputtobed -i ${bedmethyl} -o ${meta.id}_sturgeon.bed \\
-        -s modkit_pileup --reference-genome ${params.sturgeon_reference_genome}
-    rm -f ${meta.id}_sturgeon.bed.tmp
+    export TMPDIR=\$PWD MPLCONFIGDIR=\$PWD/.mpl
     mkdir -p ${meta.id}
-    mv ${meta.id}_sturgeon.bed ${meta.id}/
-    sturgeon predict -i ${meta.id}/${meta.id}_sturgeon.bed -o ${meta.id} \\
-        -m ${model} --plot-results
+    sturgeon-v2 inputtobed -i ${calls} -o ${meta.id}/${meta.id}_sturgeon.bed -m ${model}
+    sturgeon-v2 single -i ${meta.id}/${meta.id}_sturgeon.bed -f bed -m ${model} -o ${meta.id} -p
+    mv ${meta.id}/result.txt ${meta.id}/${meta.id}_sturgeon_scores.tsv
+    mv ${meta.id}/plot.png ${meta.id}/${meta.id}_sturgeon.png
     """
 
     stub:
     """
     mkdir -p ${meta.id}
-    printf 'number_probes\\n0\\n' > ${meta.id}/${meta.id}_sturgeon_general.csv
+    printf 'probes\\n0\\n' > ${meta.id}/${meta.id}_sturgeon_scores.tsv
     """
 }
 

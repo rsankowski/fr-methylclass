@@ -8,12 +8,12 @@
 #   crossnn/Capper_et_al_NN.pkl  crossnn/pancan_devel_v5i_NN.pkl
 #   methylyzr/EPIC_CpGannotation.bed  methylyzr/betas_mean.feather
 #   methylyzr/W_RELIEF.feather  methylyzr/class_priors.csv
-#   sturgeon/general.zip
+#   sturgeon/cns-v2.5.zip      (Sturgeon V2; keep the file name)
 #   lamprey/model/            (HuggingFace snapshot of tachterberg/Lamprey, 6.8 GB)
 #
 # Needs: git, git-lfs, curl, unzip; python3 + huggingface_hub for Lamprey.
 # Check each tool's licence before use. Sizes: crossNN 0.35 GB, MethyLYZR 0.65 GB,
-# Sturgeon 1.8 GB, Lamprey 6.8 GB.
+# Sturgeon V2 3.4 GB, Lamprey 6.8 GB.
 set -euo pipefail
 
 OUT="${1:?usage: download_assets.sh <outdir> [crossnn methylyzr sturgeon lamprey]}"
@@ -52,8 +52,10 @@ methylyzr() {
 
 sturgeon() {
     mkdir -p "$OUT/sturgeon"
-    curl -fsSL -o "$OUT/sturgeon/general.zip" \
-        "https://www.dropbox.com/s/yzca4exl40x9ukw/general.zip?dl=1"
+    # Sturgeon V2 cns-v2.5 model, Zenodo record 22899108
+    curl -fsSL -o "$OUT/sturgeon/cns-v2.5.zip" \
+        "https://zenodo.org/records/22899108/files/cns-v2.5.zip"
+    echo "9e45b5d8788b7fecce1d1d4293e32fc9  $OUT/sturgeon/cns-v2.5.zip" | md5sum -c -
 }
 
 lamprey() {

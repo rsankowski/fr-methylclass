@@ -5,7 +5,7 @@ Nanopore methylation-based tumour classification as a Nextflow pipeline.
 > ⚠️ **EXPERIMENTAL. RESEARCH USE ONLY.** None of the classifiers are validated for diagnostic use.
 
 fr-methylclass runs several published methylation classifiers (crossNN, MethyLYZR,
-Sturgeon, Lamprey) plus copy-number profiling on nanopore BAMs with 5mC calls, and
+Sturgeon V2, Lamprey) plus copy-number profiling on nanopore BAMs with 5mC calls, and
 writes a one-page PDF report per sample. It is the Nextflow (DSL2) port of the
 Methylation Classification GUI used in Freiburg. Every path, model and parameter
 is a pipeline parameter, and every tool runs in a pinned container.
@@ -14,7 +14,7 @@ is a pipeline parameter, and every tool runs in a pinned container.
 BAMs ─► discover + group ─► ALIGN (merge fragments → dorado aligner → sort/index), once per sample × genome
                               ├─ hg19 ─► modkit pileup --combine-mods ─► bedtools ∩ probes ─► crossNN (Capper + pan-cancer)
                               ├─ hg38 ─► chr shards ─► bam2feather ─► MethyLYZR
-                              ├─ hg38 ─► modkit pileup ─► sturgeon inputtobed ─► sturgeon predict
+                              ├─ chm13 ─► modkit adjust-mods h→m ─► modkit extract (probes ±25 bp) ─► sturgeon-v2 inputtobed ─► sturgeon-v2 single
                               ├─ hg38 ─► lamprey-preprocess ─► lamprey                    (opt-in)
                               ├─ hg38 ─► cnvpytor 100 kb ─► CNV segment plot
                               └─ hg38 ─► rapidCNS2 (nested Nextflow run)                 (opt-in)
@@ -30,13 +30,13 @@ git clone https://github.com/rsankowski/fr-methylclass.git
 # 1. Build the classifier images locally (their licences forbid redistribution, see below)
 fr-methylclass/containers/build.sh crossnn methylyzr sturgeon lamprey
 
-# 2. Fetch the models (crossNN, MethyLYZR, Sturgeon, Lamprey), about 10 GB
+# 2. Fetch the models (crossNN, MethyLYZR, Sturgeon V2, Lamprey), about 11 GB
 fr-methylclass/scripts/download_assets.sh /data/methylclass-assets
 
 # 3. Run (Nextflow pulls the pipeline from GitHub; hts/align/report images come from ghcr.io)
 nextflow run rsankowski/fr-methylclass -r v1.0.0 -profile docker \
     --input /data/run42/bam_pass \
-    --hg19_fasta /ref/hg19.fa --hg38_fasta /ref/hg38.fa \
+    --hg19_fasta /ref/hg19.fa --hg38_fasta /ref/hg38.fa --chm13_fasta /ref/chm13v2.0.fa \
     --assets_dir /data/methylclass-assets \
     --outdir /data/run42/methylclass
 ```
@@ -85,15 +85,22 @@ GUI ticks by default. To add more, list them, e.g.
 |---|---|---|
 | `crossnn` | hg19 | `crossnn/Capper_et_al_NN.pkl` (`--crossnn_model_capper`), `crossnn/pancan_devel_v5i_NN.pkl` (`--crossnn_model_pancan`); probe BED shipped in `assets/nf/` |
 | `methylyzr` | hg38 | `methylyzr/{EPIC_CpGannotation.bed, betas_mean.feather, W_RELIEF.feather, class_priors.csv}` |
-| `sturgeon` | hg38 | `sturgeon/general.zip` (`--sturgeon_model`) |
+| `sturgeon` | chm13 | `sturgeon/cns-v2.5.zip` (`--sturgeon_model`). Sturgeon V2, model `cns-v2.5` from [Zenodo 22899108](https://zenodo.org/records/22899108). Keep the file name: the loader expects the zip's top folder to match it. |
 | `lamprey` | hg38 | `lamprey/model/` = HF snapshot of `tachterberg/Lamprey` rev `6167d763` (`--lamprey_model`). This can also be a path inside a HF cache (`…/models--tachterberg--Lamprey/snapshots/<rev>`), in which case the whole repo dir is staged so its blob symlinks resolve. A repo id here downloads the model at run time instead. |
 | `cnv` | hg38 | none (cnvpytor in the rapidCNS2 image) |
 | `rapidcns2` | hg38 | `--annovar_path --annovar_db --annotsv_annot --rapidcns2_annotations --rapidcns2_cnv_genes --rapidcns2_panel` |
 | `metagenomics` | raw reads | none. Needs internet on first run (`--metagenomics_database_set`, `--metagenomics_classifier`). |
 | `report` | n/a | none |
 
-You can change the genome of each tool with `--<tool>_genome hg19|hg38`. If a
+You can change the genome of each tool with `--<tool>_genome hg19|hg38|chm13`. If a
 FASTA has no `.fai`, the pipeline creates one.
+
+**Sturgeon V2 needs T2T-CHM13v2.0.** Its probe locations are CHM13 coordinates and
+hg38 is not supported (wrongly aligned data gives wrong calls without an error), so
+`--chm13_fasta` is required and every sample is aligned a third time. Use the
+[analysis set](https://s3-us-west-2.amazonaws.com/human-pangenomics/T2T/CHM13/assemblies/analysis_set/chm13v2.0.fa.gz)
+(`chr`-prefixed names). By default 5hmC is folded into 5mC first
+(`--sturgeon_combine_hmc`, as the Sturgeon V2 README advises).
 
 **rapidCNS2 and metagenomics** are full Nextflow pipelines of their own. They
 are launched as one task on the host, so they need `nextflow` and Docker
@@ -110,7 +117,7 @@ The output has the same layout as the GUI's:
 <outdir>/aligned/<genome>/<sample>/<sample>.sorted.bam(.bai)
 <outdir>/crossnn/bedmethyl/  <outdir>/crossnn/results/<sample>_crossnn_{top,all_scores}.tsv
 <outdir>/methylyzr/feather/  <outdir>/methylyzr/results/MethyLYZR_<sample>.{csv,pdf}
-<outdir>/sturgeon/bedmethyl/ <outdir>/sturgeon/results/<sample>/
+<outdir>/sturgeon/results/<sample>/<sample>_sturgeon{.bed,_scores.tsv,.png}
 <outdir>/lamprey/preprocessed/ <outdir>/lamprey/results/<sample>_lamprey{.csv,_report.txt,_top5.png}
 <outdir>/cnv/<sample>.cnvpytor.calls.100000.tsv  <sample>.cnv_segments.png  <sample>_cnvpytor_100k.png
 <outdir>/rapidcns2/results-<sample>/
@@ -145,7 +152,7 @@ Resources are set per process label in `conf/base.config` and capped by
 | `hts` | samtools 1.21, bedtools 2.31.1, modkit 0.5.0 |
 | `crossnn` | crossNN @26e4db9 (code only), torch 2.10 CPU, scikit-learn 1.6.1 |
 | `methylyzr` | MethyLYZR @f78855e, unmodified |
-| `sturgeon` | Sturgeon @d86d20f |
+| `sturgeon` | Sturgeon V2 @d581abf, modkit 0.5.0, samtools |
 | `lamprey` | Lamprey @e885837, modkit 0.5.0 |
 | `report` | matplotlib, pandas, pyyaml (PDF report + CNV segment plot) |
 | `areebapatel/rapid_cns` | cnvpytor, pinned by digest |
@@ -180,7 +187,7 @@ fr-methylclass only orchestrates other people's tools. Please cite the original 
 
 - **crossNN**: https://gitlab.com/euskirchen-lab/crossnn
 - **MethyLYZR**: https://github.com/marasteiger/MethyLYZR
-- **Sturgeon**: https://github.com/marcpaga/sturgeon
+- **Sturgeon V2**: https://github.com/deRidderLab/sturgeon-v2 (model: https://zenodo.org/records/22899108)
 - **Lamprey**: https://github.com/princessmaximacenter/Lamprey (model: https://huggingface.co/tachterberg/Lamprey)
 - **Rapid-CNS2**: https://github.com/areebapatel/Rapid-CNS2_nf
 - **cnvpytor**, **modkit**, **dorado**, **samtools**, **bedtools**, EPI2ME **wf-metagenomics**
@@ -196,7 +203,7 @@ you obtain them from their authors and must accept their licences yourself:
 |---|---|
 | crossNN | no licence published, so all rights reserved by the authors |
 | MethyLYZR | MPG research licence: academic / not-for-profit research only; no commercial or clinical use, no alterations, no redistribution |
-| Sturgeon | Oncode / Cyclomics evaluation licence: internal non-commercial research only; no clinical or diagnostic use, no redistribution, no derivative works; publishing results needs permission from Oncode and Cyclomics |
+| Sturgeon V2 | Oncode evaluation licence: academic research only; no redistribution, no derivative works; publishing results obtained with it is not permitted (commercial use: contact Oncode) |
 | Lamprey | Oncode / Cyclomics evaluation licence: internal non-commercial research only; no clinical use, no redistribution, no derivative works; inform Oncode and Cyclomics in writing before submitting results for publication |
 
 None of these tools may be used for diagnosis or patient care under these terms.

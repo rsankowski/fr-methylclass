@@ -1,4 +1,4 @@
-# samtools + bedtools + modkit 0.5.0 (pileup for crossNN / Sturgeon, probe intersect, read counts)
+# samtools + bedtools + modkit 0.5.0 (pileup for crossNN, probe intersect, read counts)
 FROM mambaorg/micromamba:1.5.10-bookworm-slim
 USER root
 ENV PATH=/opt/conda/bin:$PATH
