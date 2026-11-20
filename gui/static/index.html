@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>fr-methylclass</title>
+<link rel="icon" href="/static/icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <img src="/api/logo" alt="" class="logo" id="logo">
+    <div class="title-block">
+      <h1>Methylation-based Tumour Classification</h1>
+      <p class="subtitle">fr-methylclass &middot; crossNN &middot; MethyLYZR &middot; Sturgeon V2 &middot; Lamprey &middot; rapidCNS2</p>
+    </div>
+  </div>
+  <div class="topbar-actions">
+    <button id="settingsBtn" class="btn btn-secondary">⚙ Settings</button>
+    <button id="quitBtn" class="btn btn-secondary" title="Stop the GUI server. Running pipelines keep running.">Quit</button>
+  </div>
+</header>
+
+<div class="warning-banner" role="alert">
+  <strong>⚠ EXPERIMENTAL — RESEARCH USE ONLY.</strong>
+  These classifiers and all results they produce are purely experimental.
+  They are <strong>not validated for diagnostic use</strong> and must not be
+  used as the basis for any clinical or forensic decision. Interpret every
+  result with appropriate caution.
+</div>
+
+<main>
+  <section class="card">
+    <h2>1 &nbsp;Input BAM files</h2>
+    <p class="hint">Add individual BAM files, a folder of BAMs, a folder
+      containing sub-folders of BAMs (searched recursively), or a
+      <code>sample,bam</code> CSV samplesheet.</p>
+
+    <div class="input-row">
+      <input type="text" id="pathInput" placeholder="/path/to/file.bam or /path/to/folder"
+             autocomplete="off">
+      <button id="addPathBtn" class="btn">Add path</button>
+      <button id="browseBtn" class="btn btn-secondary">Browse…</button>
+    </div>
+
+    <ul id="pathList" class="path-list"></ul>
+
+    <div class="group-mode">
+      <span class="group-label">Sample grouping:</span>
+      <label><input type="radio" name="groupMode" value="folder" checked>
+        Each sub-folder = one sample <small>(merges split BAM fragments, e.g. ONT <code>bam_pass/&lt;barcode&gt;/</code>)</small></label>
+      <label><input type="radio" name="groupMode" value="file">
+        Each BAM file = one sample</label>
+    </div>
+
+    <div id="discoverSummary" class="discover-summary hidden"></div>
+  </section>
+
+  <section class="card">
+    <h2>2 &nbsp;References &amp; models</h2>
+    <p class="hint">crossNN aligns to <strong>hg19</strong>; MethyLYZR, Lamprey,
+      copy-number and rapidCNS2 to <strong>hg38</strong>; Sturgeon V2 to
+      <strong>T2T-CHM13v2.0</strong>. The models folder is the one filled by
+      <code>scripts/download_assets.sh</code>. These paths are saved on this
+      computer and reused next time.</p>
+    <div class="grid2">
+      <label for="hg19_fasta">hg19 FASTA</label>
+      <input type="text" id="hg19_fasta" class="setting" placeholder="/ref/hg19.fa" autocomplete="off">
+      <button class="btn btn-secondary browseField" data-target="hg19_fasta" data-mode="fasta">Browse…</button>
+
+      <label for="hg38_fasta">hg38 FASTA</label>
+      <input type="text" id="hg38_fasta" class="setting" placeholder="/ref/hg38.fa" autocomplete="off">
+      <button class="btn btn-secondary browseField" data-target="hg38_fasta" data-mode="fasta">Browse…</button>
+
+      <label for="chm13_fasta">CHM13 FASTA</label>
+      <input type="text" id="chm13_fasta" class="setting" placeholder="/ref/chm13v2.0.fa (Sturgeon V2)" autocomplete="off">
+      <button class="btn btn-secondary browseField" data-target="chm13_fasta" data-mode="fasta">Browse…</button>
+
+      <label for="assets_dir">Models folder</label>
+      <input type="text" id="assets_dir" class="setting" placeholder="/data/methylclass-assets" autocomplete="off">
+      <button class="btn btn-secondary browseField" data-target="assets_dir" data-mode="dir">Browse…</button>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>3 &nbsp;Classifiers</h2>
+    <p class="hint">Tick the tools to run. The PDF report summarises everything
+      else that ran for a sample. rapidCNS2 and Metagenomics are full nested
+      pipelines (heavy, off by default); Lamprey covers haematological classes only.</p>
+    <div class="tools">
+      <label class="tool"><input type="checkbox" value="crossnn" checked>
+        <span><strong>crossNN</strong><br><small>NN methylation classifier (Capper + pan-cancer) · hg19</small></span></label>
+      <label class="tool"><input type="checkbox" value="methylyzr" checked>
+        <span><strong>MethyLYZR</strong><br><small>EPIC-array emulation classifier · hg38</small></span></label>
+      <label class="tool"><input type="checkbox" value="sturgeon" checked>
+        <span><strong>Sturgeon V2</strong><br><small>CNS classifier, model cns-v2.5 · CHM13</small></span></label>
+      <label class="tool"><input type="checkbox" value="lamprey">
+        <span><strong>Lamprey</strong><br><small>haematological malignancy classifier (86 classes) · hg38</small></span></label>
+      <label class="tool"><input type="checkbox" value="cnv" checked>
+        <span><strong>Copy-number</strong><br><small>cnvpytor 100 kb profile · hg38</small></span></label>
+      <label class="tool"><input type="checkbox" value="report" checked>
+        <span><strong>PDF report</strong><br><small>one page per sample</small></span></label>
+      <label class="tool"><input type="checkbox" value="rapidcns2">
+        <span><strong>rapidCNS2</strong><br><small>full CNV + methylation + SNV pipeline (nested)</small></span></label>
+      <label class="tool"><input type="checkbox" value="metagenomics">
+        <span><strong>Metagenomics</strong><br><small>EPI2ME wf-metagenomics on raw reads (nested)</small></span></label>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>4 &nbsp;Output &amp; options</h2>
+    <div class="grid2">
+      <label for="outInput">Output folder</label>
+      <input type="text" id="outInput" placeholder="(optional) defaults to a new dated folder" autocomplete="off">
+      <button class="btn btn-secondary browseField" data-target="outInput" data-mode="dir">Browse…</button>
+
+      <label for="patientId">Patient / case ID</label>
+      <input type="text" id="patientId" class="wide" placeholder="(optional) printed on the PDF header" autocomplete="off">
+    </div>
+    <div class="opts">
+      <label title="Reuse finished tasks of an earlier run in the same output folder"><input type="checkbox" id="optResume" checked> Resume (reuse finished steps in the same folder)</label>
+      <label title="Delete the Nextflow work/ folder after a successful run (saves disk space, disables resume)"><input type="checkbox" id="optCleanup"> Delete intermediate files after success</label>
+      <label title="Dry run: check the wiring with placeholder outputs, nothing is computed"><input type="checkbox" id="optStub"> Dry run (stub)</label>
+    </div>
+    <details class="adv">
+      <summary>Advanced parameters for this run</summary>
+      <p class="hint" style="margin-top:8px">One <code>name = value</code> per line; any parameter of
+        <code>nextflow.config</code>, e.g. <code>lamprey_model = /models/lamprey</code>,
+        <code>crossnn_top_n = 5</code>, <code>continue_on_error = false</code>.</p>
+      <textarea id="extraParams" spellcheck="false" placeholder="sturgeon_combine_hmc = true"></textarea>
+    </details>
+  </section>
+
+  <div class="actions">
+    <button id="runBtn" class="btn btn-primary btn-lg">Run classification</button>
+    <button id="checkBtn" class="btn">Check setup</button>
+    <button id="previewBtn" class="btn btn-secondary">Show command</button>
+    <span id="runHint" class="run-hint"></span>
+  </div>
+
+  <section id="checkCard" class="card hidden">
+    <h2>Setup check</h2>
+    <ul id="checkList" class="checks"></ul>
+  </section>
+
+  <section id="previewCard" class="card hidden">
+    <h2>Nextflow command</h2>
+    <p class="hint">What the GUI runs. Parameters go into a params file in the output folder.</p>
+    <pre id="previewCmd" class="cmd-preview"></pre>
+    <pre id="previewParams" class="cmd-preview"></pre>
+  </section>
+
+  <section id="jobCard" class="card hidden">
+    <div class="job-head">
+      <h2>Run progress</h2>
+      <span id="jobStatus" class="status-pill"></span>
+      <span class="spacer"></span>
+      <button id="openBtn" class="btn btn-secondary">Open folder</button>
+      <button id="cancelBtn" class="btn btn-danger hidden">Cancel</button>
+    </div>
+    <div id="jobPath" class="job-path"></div>
+    <div id="counts" class="counts"></div>
+    <div id="results" class="results"></div>
+    <div id="stepGrid" class="step-grid"></div>
+    <h3 class="log-title">Live log</h3>
+    <pre id="logView" class="log-view"></pre>
+  </section>
+
+  <section class="card">
+    <h2>Previous runs</h2>
+    <p class="hint">Runs keep going when the GUI is closed; click one to follow it or see its results.</p>
+    <ul id="runList" class="run-list"></ul>
+    <div class="actions" style="margin:10px 0 0">
+      <button id="testBtn" class="btn btn-secondary" title="Dry run on the bundled dummy data: checks Nextflow and the pipeline wiring, no models or references needed">Run installation test</button>
+    </div>
+  </section>
+</main>
+
+<footer>
+  fr-methylclass &middot; Experimental research tool &middot; Not for diagnostic use.
+</footer>
+
+<!-- filesystem browser modal -->
+<div id="browser" class="modal hidden">
+  <div class="modal-box">
+    <div class="modal-head">
+      <span id="browserPath" class="browser-path"></span>
+      <button id="browserClose" class="btn btn-secondary">Close</button>
+    </div>
+    <ul id="browserList" class="browser-list"></ul>
+    <div class="modal-foot">
+      <button id="browserHome" class="btn btn-secondary">Home</button>
+      <button id="browserSelectDir" class="btn btn-primary">Use this folder</button>
+    </div>
+  </div>
+</div>
+
+<!-- settings modal -->
+<div id="settings" class="modal hidden">
+  <div class="modal-box wide">
+    <div class="modal-head"><strong>Settings (this computer)</strong>
+      <button id="settingsClose" class="btn btn-secondary">Close</button></div>
+    <div class="modal-body">
+      <h3>How to run the tools</h3>
+      <div class="grid2">
+        <label for="profile">Software</label>
+        <select id="profile" class="setting wide">
+          <option value="docker">Docker containers (recommended)</option>
+          <option value="podman">Podman containers</option>
+          <option value="singularity">Singularity containers</option>
+          <option value="apptainer">Apptainer containers</option>
+          <option value="host">Installed on this computer (conf/host.config)</option>
+          <option value="none">No profile (only my config file below)</option>
+        </select>
+        <label></label>
+        <div class="opts wide" style="margin:0">
+          <label><input type="checkbox" id="gpu" class="setting"> Use the GPU for alignment</label>
+          <label><input type="checkbox" id="slurm" class="setting"> Submit to SLURM</label>
+        </div>
+        <label for="nextflow_bin">Nextflow</label>
+        <input type="text" id="nextflow_bin" class="setting" placeholder="(found on PATH)" autocomplete="off">
+        <button class="btn btn-secondary browseField" data-target="nextflow_bin" data-mode="file">Browse…</button>
+        <label for="config_file">Extra config</label>
+        <input type="text" id="config_file" class="setting" placeholder="(optional) my.config passed with -c" autocomplete="off">
+        <button class="btn btn-secondary browseField" data-target="config_file" data-mode="config">Browse…</button>
+        <label for="runs_root">Runs folder</label>
+        <input type="text" id="runs_root" class="setting" autocomplete="off">
+        <button class="btn btn-secondary browseField" data-target="runs_root" data-mode="dir">Browse…</button>
+      </div>
+      <h3>Resources &amp; images</h3>
+      <div class="grid2">
+        <label for="max_cpus">Max CPUs</label>
+        <input type="text" id="max_cpus" class="setting wide" placeholder="32" autocomplete="off">
+        <label for="max_memory">Max memory</label>
+        <input type="text" id="max_memory" class="setting wide" placeholder="128.GB" autocomplete="off">
+        <label for="container_registry">Public images</label>
+        <input type="text" id="container_registry" class="setting wide" placeholder="ghcr.io/rsankowski" autocomplete="off">
+        <label for="restricted_registry">Classifier images</label>
+        <input type="text" id="restricted_registry" class="setting wide" placeholder="methylclass (built locally by containers/build.sh)" autocomplete="off">
+      </div>
+      <h3>Parameters for every run</h3>
+      <p class="hint">One <code>name = value</code> per line, e.g. the rapidCNS2 paths
+        (<code>annovar_path</code>, <code>annovar_db</code>, <code>annotsv_annot</code>, …).</p>
+      <textarea id="extra_params" class="setting" spellcheck="false"></textarea>
+      <p class="hint" id="repoInfo" style="margin-top:12px"></p>
+    </div>
+    <div class="modal-foot">
+      <span id="settingsMsg" class="run-hint"></span>
+      <button id="settingsSave" class="btn btn-primary">Save</button>
+    </div>
+  </div>
+</div>
+
+<script src="/static/app.js"></script>
+</body>
+</html>

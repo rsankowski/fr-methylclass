@@ -11,3 +11,10 @@ nested-work/
 __pycache__/
 *.pyc
 .claude/
+# GUI: per-computer settings, run history, logs, local logo
+gui/settings.json
+gui/history.json
+gui/logs/
+gui/.launcher-installed
+gui/assets/logo.*
+gui/assets/freiburg_logo.*

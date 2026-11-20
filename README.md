@@ -56,6 +56,49 @@ On the Freiburg workstation, the tools are already installed natively:
 nextflow run main.nf -profile host --input /path/to/bam_pass --outdir results
 ```
 
+## Graphical interface
+
+`gui/` holds a point-and-click front end for the pipeline. It is a small local
+web app (Python 3.7+ standard library only, nothing to install) that opens in
+your browser, builds the `nextflow run` command and follows the run.
+
+**Start it**
+
+- **Linux:** run `gui/install-launcher.sh` once. It puts an **fr-methylclass**
+  icon on the desktop and in the applications menu; double-click it from then on.
+  (GNOME may ask once to *Allow Launching*: right-click the icon.) In KDE, Cinnamon,
+  MATE or Xfce you can also double-click `fr-methylclass-gui.desktop` in the repository.
+- **macOS:** double-click `fr-methylclass-gui.command`.
+- **Terminal:** `gui/start.sh` (Ctrl+C stops it).
+
+The GUI listens on http://127.0.0.1:8780 only (`FR_METHYLCLASS_GUI_PORT` changes
+the port). Double-clicking the icon again while it runs just reopens the page.
+
+**Use it**
+
+1. *Input*: add BAM files, folders (e.g. `bam_pass/`) or a `sample,bam` CSV. The
+   preview shows which BAMs become which sample.
+2. *References & models*: the hg19, hg38 and CHM13 FASTAs and the models folder
+   from `scripts/download_assets.sh`. They are remembered on this computer.
+3. *Classifiers*: tick the tools.
+4. *Output & options*: output folder (default: a new dated folder under
+   `~/fr-methylclass-runs`), patient ID for the PDF, resume, cleanup, dry run,
+   and any other pipeline parameter as `name = value` lines.
+
+**Check setup** tests Nextflow, Java, Docker, the classifier images, references
+and models before you start. **Run installation test** does a dry run on the
+bundled dummy data. **Settings** chooses Docker/Podman/Singularity/Apptainer or
+the native `host` profile, GPU, SLURM, the Nextflow path, CPU/memory caps and
+parameters for every run (e.g. the rapidCNS2 annotation paths).
+
+During a run you see every Nextflow task with its status, the live log, and links
+to the PDF reports and classifier results as they appear. Nextflow runs in the
+background with its log in `<outdir>/fr-methylclass-gui.log`, so closing the
+browser or quitting the GUI does not stop it; the run shows up under *Previous
+runs* when you reopen the GUI. Settings live in `gui/settings.json` and the run
+list in `gui/history.json` (both untracked). To show a logo in the header, put
+`logo.png` (or `.svg`) into `gui/assets/`.
+
 ## Input
 
 `--input` takes a comma-separated list of any of these:

@@ -1,0 +1,9 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=fr-methylclass
+Comment=Start the fr-methylclass GUI (run gui/install-launcher.sh for a desktop / menu icon)
+Exec=sh -c "exec \\"\\$(dirname \\"\\$1\\")/gui/start.sh\\"" fr-methylclass-gui %k
+Icon=applications-science
+Terminal=false
+Categories=Science;Biology;
